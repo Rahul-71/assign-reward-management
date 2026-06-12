@@ -1,10 +1,11 @@
 package com.assignment.rewardmanagement.service;
 
 import java.time.LocalDateTime;
+import java.time.Month;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.assignment.rewardmanagement.entity.Customer;
@@ -19,7 +20,6 @@ public class RewardServiceImpl implements RewardService {
     private final CustomerRepository customerRepository;
     private final TransactionRecordRepository transactionRecordRepository;
 
-    @Autowired
     public RewardServiceImpl(CustomerRepository customerRepository,
             TransactionRecordRepository transactionRecordRepository) {
         this.customerRepository = customerRepository;
@@ -35,22 +35,40 @@ public class RewardServiceImpl implements RewardService {
 
         List<TransactionRecord> transactions = transactionRecordRepository.findByCustomer(customer);
         // get trnsaction for last 3 months
-        transactions = transactions.stream().filter(t -> t.getTransactionDate().isAfter(LocalDateTime.now().minusMonths(3))).toList();
+        transactions = transactions.stream()
+                .filter(
+                    t -> t.getTransactionDate().isAfter(LocalDateTime.now().minusMonths(3))
+                ).toList();
 
         // calculate monthwise reward        
-        transactions.stream().collect(
-            Collectors.groupingBy(
-                t -> t.getTransactionDate().getMonth(), 
-                Collectors.summingInt(t -> calculateRewards(t.getAmount()))
-            )
+        Map<Month, Integer> monthwiseRewards = transactions.stream().collect(
+                Collectors.groupingBy(
+                        t -> t.getTransactionDate().getMonth(),
+                        Collectors.summingInt(t -> calculateRewards(t.getAmount()))
+                )
         );
 
-        return null;
+        Reward reward = new Reward();
+        reward.setCustomerId(customerId);
+        reward.setCustomerName(customer.getName());
+        reward.setMonthlyRewardPoints(monthwiseRewards);
+        reward.setTotalRewardPoints(monthwiseRewards.values().stream().mapToInt(Integer::intValue).sum());
+        return reward;
     }
 
+    /*
+    A customer receives 2 points for every dollar spent over $100 in each transaction, 
+    plus 1 point for every dollar spent between $50 and $100 in each transaction.
+    (e.g. a $120 purchase = 2x$20 + 1x$50 = 90 points).
+     */
     private int calculateRewards(double amount) {
-        
-        throw new UnsupportedOperationException("Unimplemented method 'calculateRewards'");
+        if (amount > 100) {
+            return (int) (2 * (amount - 100) + 50);
+        } else if (amount > 50) {
+            return (int) (amount - 50);
+        } else {
+            return 0;
+        }
     }
 
 }
