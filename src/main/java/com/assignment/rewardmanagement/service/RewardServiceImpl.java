@@ -6,7 +6,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import com.assignment.rewardmanagement.entity.Customer;
 import com.assignment.rewardmanagement.entity.Reward;
@@ -31,13 +33,13 @@ public class RewardServiceImpl implements RewardService {
         if (customerRepository == null || transactionRecordRepository == null) {
             return null;
         }
-        Customer customer = customerRepository.findById(customerId).orElseThrow(() -> new RuntimeException("Customer not found"));
+        Customer customer = customerRepository.findById(customerId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Customer not found"));
 
         List<TransactionRecord> transactions = transactionRecordRepository.findByCustomer(customer);
         // get trnsaction for last 3 months
         transactions = transactions.stream()
                 .filter(
-                    t -> t.getTransactionDate().isAfter(LocalDateTime.now().minusMonths(3))
+                        t -> t.getTransactionDate().isAfter(LocalDateTime.now().minusMonths(3))
                 ).toList();
 
         // calculate monthwise reward        
