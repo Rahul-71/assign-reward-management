@@ -1,5 +1,7 @@
 package com.assignment.rewardmanagement.controller;
 
+import java.util.List;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -23,4 +25,10 @@ public class RewardController {
     public ResponseEntity<Reward> getRewardPoints(@PathVariable int customerId) {
         return ResponseEntity.ok(rewardService.getRewardPointsForCustomer(customerId));
     }
+
+    @GetMapping
+    public ResponseEntity<List<Reward>> getAllCustomerRewards() {
+        return ResponseEntity.ok(rewardService.getAllCustomerRewards());
+    }
+
 }

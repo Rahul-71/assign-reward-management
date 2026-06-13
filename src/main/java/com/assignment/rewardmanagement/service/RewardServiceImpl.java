@@ -2,6 +2,7 @@ package com.assignment.rewardmanagement.service;
 
 import java.time.LocalDateTime;
 import java.time.Month;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -35,6 +36,21 @@ public class RewardServiceImpl implements RewardService {
         }
         Customer customer = customerRepository.findById(customerId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Customer not found"));
 
+        return getReward(customer);
+    }
+
+    @Override
+    public List<Reward> getAllCustomerRewards() {
+        List<Customer> customers = customerRepository.findAll();
+
+        List<Reward> rewards = new ArrayList<>();
+
+        customers.forEach(customer -> rewards.add(getReward(customer)));
+
+        return rewards;
+    }
+
+    private Reward getReward(Customer customer) {
         List<TransactionRecord> transactions = transactionRecordRepository.findByCustomer(customer);
         // get trnsaction for last 3 months
         transactions = transactions.stream()
@@ -51,7 +67,7 @@ public class RewardServiceImpl implements RewardService {
         );
 
         Reward reward = new Reward();
-        reward.setCustomerId(customerId);
+        reward.setCustomerId(customer.getId());
         reward.setCustomerName(customer.getName());
         reward.setMonthlyRewardPoints(monthwiseRewards);
         reward.setTotalRewardPoints(monthwiseRewards.values().stream().mapToInt(Integer::intValue).sum());
@@ -72,5 +88,4 @@ public class RewardServiceImpl implements RewardService {
             return 0;
         }
     }
-
 }
